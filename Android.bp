@@ -1,0 +1,14 @@
+cc_binary {
+    name: "zygotroller",
+    srcs: ["zygotroll.cpp"],
+    shared_libs: [
+        "libutils",
+        "libcutils",
+        "libbinder",
+        "liblog",
+    ],
+    include_dirs: [
+        "frameworks/native/include",
+        "system/core/include",
+    ]
+}
