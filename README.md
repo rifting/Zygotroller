@@ -1,4 +1,5 @@
 # Zygotroller
+## Remove profile owners/Family Link on any pre June 2024 device, with Developer Mode
 Zygotroller is a proof-of-concept that shows how to remove an Android profile owner (used for parental controls or MDM) if you can become the user of the profile owner, for example, with CVE-2024-31317's Zygote injection bug, or Magisk.
 
 Google's parental control system, Family Link, is shown as an example in this repo.
