@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
 
         // Restriction name
         data2.writeUtf8AsUtf16(policy);
-        data2.writeInt32(0); // Policy enabled (set to false)
+        data2.writeInt32(0); // Policy disabled (set to false)
 
         data2.writeInt32(1); // Whatever "parent" means. (set to true)
 
