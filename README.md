@@ -94,6 +94,16 @@ $ dpm list-owners
 1 owner:
 User  0: admin=com.google.android.gms.supervision/com.google.android.gms.kids.account.receiver.ProfileOwnerReceiver,ProfileOwner
 ```
+```
+$ abx2xml /data/system/users/0.xml -
+...
+<device_policy_local_restrictions>
+    <restrictions_user user_id="0">
+      <restrictions no_factory_reset="true" no_config_location="true" no_add_clone_profile="true" no_safe_boot="true" no_config_credentials="true" no_config_date_time="true" />
+    </restrictions_user>
+  </device_policy_local_restrictions>
+...
+```
 
 After:
 ```
@@ -101,6 +111,13 @@ $ dpm list-owners
 no owners
 emu64xa:/ $
 ```
+```
+$ abx2xml /data/system/users/0.xml -
+...
+<device_policy_local_restrictions />
+...
+```
+
 
 ## Special Thanks
 [gburca for BinderDemo](https://github.com/gburca/BinderDemo)
