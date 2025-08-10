@@ -99,7 +99,8 @@ Look a little further on that line and you'll see
 (three dots used to show truncation)
 
 You need to replace these with the paths to the native library you've just installed to the device. Run `pm path com.rifting.copynativelib`.
-The path to the file will be the parent directory of the APK shown as the output of the command, + `lib/arm64-v8a/libzygotroller.so`. So that line will end up looking something like this:
+The path to the file will be the parent directory of the APK shown as the output of the command, + `lib/arm64-v8a/libzygotroller.so`. LD_LIBRARY_PATH needs to be the directory of the library, and then the actual path to the library should come after that.
+So that line will end up looking something like this:
 
 `...echo zYg0te $(LD_LIBRARY_PATH=/data/app/~~IQhIf-M_9eLGoJ-Wd-qaCA==/com.rifting.copynativelib-a6N1upfA-_Trjh_cPCHngA==/lib/x86_64/ /data/app/~~IQhIf-M_9eLGoJ-Wd-qaCA==/com.rifting.copynativelib-a6N1upfA-_Trjh_cPCHngA==/lib/x86_64/libreal.so)...`
 
