@@ -29,7 +29,7 @@ cd ~/aosp
 
 `source build/envsetup.sh`
 
-`lunch aosp_cf_arm64-v8a_only_phone-aosp_current-eng` (if you're testing this on an emulator, change arm64-v8a to x86_64)
+`lunch aosp_cf_arm64_only_phone-aosp_current-eng` (if you're testing this on an emulator, change arm64 to x86_64)
 
 `cd ~/aosp/external`
 
